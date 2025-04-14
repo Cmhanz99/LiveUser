@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Location Alert</title>
+  <style>
+    #alert {
+      display: none;
+      background-color: #d4edda;
+      color: #155724;
+      padding: 10px;
+      border: 1px solid #c3e6cb;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Live Nearby Location Detection</h2>
+  <div id="alert">📍 You are near: <span id="place-name"></span></div>
+  <div id="currentLocation"></div>
+  <div id="targetLocation"></div>
+
+  <script>
+    // Sample properties (you can add more)
+    var places = [
+      { name: "Test Place B", lat: 10.315366, lon: 123.918746 },
+      { name: "Test Place A", lat: 12.315366, lon:  125.9187436 }
+    ];
+
+    document.getElementById("targetLocation").textContent = 
+    "Target Locations: " + places.map(function(place) {
+      return place.name + " (" + place.lat + ", " + place.lon + ")";
+    }).join(" | ");  
+
+    // Function to calculate distance in meters
+    function getDistance(lat1, lon1, lat2, lon2) {
+      var R = 6371000;
+      var dLat = (lat2 - lat1) * Math.PI / 180;
+      var dLon = (lon2 - lon1) * Math.PI / 180;
+      var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    // Start watching user's location
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(function(position) {
+        var userLat = position.coords.latitude;
+        var userLon = position.coords.longitude;
+
+        console.log("User location: ", userLat, userLon);
+        document.getElementById("currentLocation").textContent = "Current Location: " + userLat + ", " + userLon;
+
+        var nearby = false;
+
+        for (var i = 0; i < places.length; i++) {
+          var place = places[i];
+          var distance = getDistance(userLat, userLon, place.lat, place.lon);
+          console.log(place.name + " is " + distance.toFixed(2) + " meters away.");
+          document.getElementById("currentLocation").textContent = "Current Location: " + userLat + ", " + userLon;
+
+          if (distance < 500) { // less than 500 meters
+            document.getElementById("place-name").textContent = place.name;
+            document.getElementById("alert").style.display = "block";
+            nearby = true;
+            break;
+          }
+        }
+
+        if (!nearby) {
+          document.getElementById("alert").style.display = "none";
+        }
+
+      }, function() {
+        alert("Failed to get your location.");
+      });
+    } else {
+      alert("Geolocation is not supported.");
+    }
+  </script>
+</body>
+</html>
